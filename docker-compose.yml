@@ -1,0 +1,57 @@
+services:
+  lang2pose:
+    container_name: lang2pose
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: lang2pose:latest
+    runtime: nvidia
+    environment:
+      - MODE=dev
+      - ACCEPT_EULA=Y
+      - PRIVACY_CONSENT=Y
+      - DISPLAY=${DISPLAY}
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - AMENT_PREFIX_PATH=/isaac-sim/exts/omni.isaac.ros2_bridge/humble
+      - LD_LIBRARY_PATH=/isaac-sim/exts/omni.isaac.ros2_bridge/humble/lib:$LD_LIBRARY_PATH
+      - PYTHONPATH=/isaac-sim/kit/python/lib/python3.10/site-packages:/isaac-sim/exts
+      - USD_PLUGIN_PATH=/isaac-sim/exts/omni.usd.schema.isaac/plugins
+      - ROS_DISTRO=humble
+      - EXTENSIONS=omni.isaac.ros2_bridge
+      - XAUTHORITY=/root/.Xauthority
+      - ROS_DOMAIN_ID=0
+      - FASTRTPS_DEFAULT_PROFILES_FILE=/fastdds.xml
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - ./fastdds_config/fastdds.xml:/fastdds.xml:ro
+      - ${XAUTHORITY}:/root/.Xauthority:rw
+      - ./workspace/cache/kit:/isaac-sim/kit/cache:rw
+      - ./workspace/cache/ov:/root/.cache/ov:rw
+      - ./workspace/cache/pip:/root/.cache/pip:rw
+      - ./workspace/cache/glcache:/root/.cache/nvidia/GLCache:rw
+      - ./workspace/cache/computecache:/root/.nv/ComputeCache:rw
+      - ./workspace/logs:/root/.nvidia-omniverse/logs:rw
+      - ./workspace/data:/root/.local/share/ov/data:rw
+      - ./workspace/documents:/root/Documents:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /dev/shm:/dev/shm
+      - ./resources/assets:/root/Documents/assets:rw
+      - ./resources/extensions/aisl.robrain.extension:/root/Documents/Kit/shared/exts/aisl.robrain.extension:rw
+      - ./resources/extensions/omni.isaac.sim.base.kit:/isaac-sim/apps/omni.isaac.sim.base.kit:rw
+      - ./resources/extensions/lang2pose:/isaac-sim/exts/omni.isaac.examples/omni/isaac/examples/lang2pose:rw
+      - ./resources/extensions/extension.toml:/isaac-sim/exts/omni.isaac.examples/config/extension.toml:rw
+    network_mode: "host"
+    entrypoint: >
+      /bin/bash -c "
+      ./isaac-sim.sh --allow-root
+      "
+    # entrypoint: ["/isaac-sim/python.sh", "/simulation_app/codes/run_simulation_app.py"]
+    privileged: true
+    tty: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
