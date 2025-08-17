@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>aiagent</name>
+  <version>0.0.1</version>
+  <description>A ROS 2 Python package that uses the OpenAI ChatGPT API.</description>
+
+  <maintainer email="hans324oh@gmail.com">Hyeonsu Oh</maintainer>
+  <license>Apache License 2.0</license>
+
+  <!-- Build and run dependencies -->
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>rclpy</exec_depend>
+
+  <!-- If you want to install openai from within the package.xml,
+       you can (though typically installed via pip or as part of setup.py).
+       <exec_depend>openai</exec_depend>
+  -->
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
