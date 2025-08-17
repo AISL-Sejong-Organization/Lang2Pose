@@ -80,10 +80,17 @@ This file will be automatically loaded inside the container at runtime.
 * Find `aisl.robrain.extension` under 3rd party
 * **Disable** it once, then **re-enable** it
 
-1. Finally, open:
+4. Finally, open:
 
 * **Isaac Examples → lang2pose**
 * Start the demo 🎉
+
+## 🚧 Upcoming Features
+
+- **Vision-based Pick & Place**: Integration with the perception module for language-guided pick-and-place tasks will be released soon.
+- **Real-World Demonstrations**: Experiments with the physical robot setup will be provided shortly.
+
+---
 
 # 🎥 Demo Videos
 
