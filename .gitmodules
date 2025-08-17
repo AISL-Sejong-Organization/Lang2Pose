@@ -1,0 +1,3 @@
+[submodule "resources/extensions/aisl.robrain.extension"]
+	path = resources/extensions/aisl.robrain.extension
+	url = https://github.com/AISL-Sejong-Organization/aisl.isaacsim.robrain.extension.git
