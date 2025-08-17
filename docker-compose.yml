@@ -43,6 +43,7 @@ services:
       - ./resources/extensions/lang2pose:/isaac-sim/exts/omni.isaac.examples/omni/isaac/examples/lang2pose:rw
       - ./resources/extensions/extension.toml:/isaac-sim/exts/omni.isaac.examples/config/extension.toml:rw
     network_mode: "host"
+    ipc: host
     entrypoint: >
       /bin/bash -c "
       ./isaac-sim.sh --allow-root
@@ -55,3 +56,33 @@ services:
         reservations:
           devices:
             - capabilities: [gpu]
+  llmagent:
+    container_name: llmagent
+    build:
+      context: .
+      dockerfile: docker/llm_agent.DockerFile
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}   # 쓰면 추가
+    network_mode: host
+    ipc: host
+    devices:
+      - /dev:/dev
+    volumes:
+      - ${XDG_RUNTIME_DIR}/pulse/native:/run/user/1000/pulse/native
+      - $HOME/.config/pulse/cookie:/root/.config/pulse/cookie:ro   # 인증 쿠키(권장)
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./resources/llmagent:/root/llmagent:rw
+    working_dir: /root/llmagent
+    command: >
+      bash -lc '
+        source /opt/ros/humble/setup.bash;
+        if [ -d src ]; then
+          colcon build --symlink-install;
+          source install/setup.bash;
+        fi;
+        ros2 run aiagent simrobot --ros-args -p use_sim_time:=true
+      '
+    tty: true
+    stdin_open: true
