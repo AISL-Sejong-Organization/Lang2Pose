@@ -58,11 +58,39 @@ Please set up and run Isaac Sim **using NVIDIA’s official container guide**:
 3. Make sure the file is named exactly .env and located in the resources/llmagent folder.
 This file will be automatically loaded inside the container at runtime.
 
+## 🚀 Usage
+
+1. **Start the containers**
+
+   ```bash
+   docker compose up -d
+    ```
+
+2. **Enter the LLM agent container** (for natural language input)
+
+    ```bash
+    docker exec -it llmagent bash
+    ```
+
+3. **Wait for Isaac Sim to launch**, then inside the simulator:
+
+![Installation Guide](assets/instllationguide1.png)
+
+* Go to **Window > Extensions > 3rd party > User**
+* Find `aisl.robrain.extension` under 3rd party
+* **Disable** it once, then **re-enable** it
+
+1. Finally, open:
+
+* **Isaac Examples → lang2pose**
+* Start the demo 🎉
 
 # 🎥 Demo Videos
 
-- **Simulation Demo**
-  [![Simulation Demo](https://img.youtube.com/vi/4lVTTlVXPP0/0.jpg)](https://youtu.be/4lVTTlVXPP0)
+## **Simulation Demo**
 
-- **Real-World Demo**
+[![Simulation Demo](https://img.youtube.com/vi/4lVTTlVXPP0/0.jpg)](https://youtu.be/4lVTTlVXPP0)
+
+## **Real-World Demo**
+
 [![Real-World Demo](https://img.youtube.com/vi/txqpBssuc1s/0.jpg)](https://www.youtube.com/shorts/txqpBssuc1s)
