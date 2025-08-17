@@ -68,7 +68,7 @@ services:
     network_mode: host
     ipc: host
     devices:
-      - /dev:/dev
+      - /dev/snd:/dev/snd
     volumes:
       - ${XDG_RUNTIME_DIR}/pulse/native:/run/user/1000/pulse/native
       - $HOME/.config/pulse/cookie:/root/.config/pulse/cookie:ro   # 인증 쿠키(권장)
