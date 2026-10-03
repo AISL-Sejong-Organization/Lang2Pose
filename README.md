@@ -51,39 +51,52 @@ Please set up and run Isaac Sim **using NVIDIA’s official container guide**:
 
 `resources/llmagent/.env`
 
-2. Add your **OpenAI API Key** in the following format (replace with your actual key):
+2. Add your **OpenRouter API Key** in the following format (replace with your actual key):
 
-`OPENAI_API_KEY=sk-xxxxxxx...`
+`OPENROUTER_API_KEY=sk-or-xxxxxxx...`
 
 3. Make sure the file is named exactly .env and located in the resources/llmagent folder.
 This file will be automatically loaded inside the container at runtime.
 
+## 👁️ Perception (FoundationPose) Setup
+
+The `perception` service estimates 6D object poses from the simulated wrist camera and publishes `/object_marker_array`.
+It needs a FoundationPose image and data (network weights + YCB meshes):
+
+- Image: `foundationpose:metacom` (FoundationPose with its CUDA extensions built)
+- Data directory containing `weights/` and `demo_data/ycb/` (default `../metacom-foundationpose`; override with `FOUNDATIONPOSE_DATA=/path/to/dir`)
+
 ## 🚀 Usage
 
-1. **Start the containers**
+1. **Build and start** (Isaac Sim, ROS 2 and the LLM agent are in a single image; perception runs in its own container)
 
    ```bash
-   docker compose up -d
-    ```
+   docker compose up -d --build
+   ```
 
-2. **Enter the LLM agent container** (for natural language input)
+2. **Wait for Isaac Sim to launch**, then open **Isaac Examples → Lang2Pose**, press **LOAD** and **START SIMULATION**.
 
-    ```bash
-    docker exec -it llmagent bash
-    ```
+3. **Run the LLM agent** (natural language input)
 
-3. **Wait for Isaac Sim to launch**, then inside the simulator:
+   ```bash
+   docker exec -it lang2pose agent
+   ```
 
-![Installation Guide](assets/instllationguide1.png)
+   Choose `2` (text) and type a command. For pick & place, first move the arm so the wrist camera sees the table (e.g. `준비 자세`). Commands containing `플레이스` switch to pick & place, `암컨트롤` back to arm control.
 
-* Go to **Window > Extensions > 3rd party > User**
-* Find `aisl.robrain.extension` under 3rd party
-* **Disable** it once, then **re-enable** it
+## 🧩 Extensions
 
-4. Finally, open:
+Every folder under `/extensions` in the container is an Isaac Sim extension search path.
+To attach an extension, bind-mount it there and add its name to `ENABLE_EXTS` in `docker-compose.yml`:
 
-* **Isaac Examples → lang2pose**
-* Start the demo 🎉
+```yaml
+    environment:
+      - ENABLE_EXTS=aisl.robrain.extension my.other.extension
+    volumes:
+      - ./path/to/my.other.extension:/extensions/my.other.extension
+```
+
+The image already contains `aisl.robrain.extension` and the Lang2Pose example; the default compose file mounts the local copies over them so code edits apply without rebuilding (toggle the extension in **Window > Extensions** or restart the container to reload).
 
 ## 🚧 Upcoming Features
 

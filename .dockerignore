@@ -1,0 +1,10 @@
+.git
+workspace/
+**/__pycache__/
+**/.git
+*.env
+*.usd
+resources/assets/
+resources/llmagent/build/
+resources/llmagent/install/
+resources/llmagent/log/
