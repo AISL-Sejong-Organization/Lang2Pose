@@ -17,9 +17,9 @@ from speech_recognition import WaitTimeoutError
 
 # 환경변수 로드 및 API KEY 체크
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY is not set!")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+if not OPENROUTER_API_KEY:
+    raise ValueError("OPENROUTER_API_KEY is not set!")
 
 # Prompt 템플릿들
 agent_prompt = PromptTemplate(
@@ -91,7 +91,10 @@ class AIAgentNode(Node):
         self.command_pub = self.create_publisher(String, "/command", 10)
 
         self.llm = ChatOpenAI(
-            model="gpt-4o-mini", temperature=0.2, openai_api_key=OPENAI_API_KEY
+            model="openai/gpt-4o-mini",
+            temperature=0.2,
+            openai_api_key=OPENROUTER_API_KEY,
+            openai_api_base="https://openrouter.ai/api/v1",
         )
 
         self.get_logger().info(f"{node_name} started.")

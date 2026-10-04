@@ -6,83 +6,69 @@ services:
       dockerfile: docker/Dockerfile
     image: lang2pose:latest
     runtime: nvidia
+    network_mode: host
+    ipc: host
+    privileged: true
+    tty: true
+    stdin_open: true
+    env_file:
+      - path: resources/llmagent/.env   # OPENROUTER_API_KEY
+        required: false
     environment:
-      - MODE=dev
       - ACCEPT_EULA=Y
       - PRIVACY_CONSENT=Y
       - DISPLAY=${DISPLAY}
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=all
-      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-      - AMENT_PREFIX_PATH=/isaac-sim/exts/omni.isaac.ros2_bridge/humble
-      - LD_LIBRARY_PATH=/isaac-sim/exts/omni.isaac.ros2_bridge/humble/lib:$LD_LIBRARY_PATH
-      - PYTHONPATH=/isaac-sim/kit/python/lib/python3.10/site-packages:/isaac-sim/exts
-      - USD_PLUGIN_PATH=/isaac-sim/exts/omni.usd.schema.isaac/plugins
-      - ROS_DISTRO=humble
-      - EXTENSIONS=omni.isaac.ros2_bridge
       - XAUTHORITY=/root/.Xauthority
-      - ROS_DOMAIN_ID=0
-      - FASTRTPS_DEFAULT_PROFILES_FILE=/fastdds.xml
       - QT_X11_NO_MITSHM=1
+      - ROS_DOMAIN_ID=0
+      # 켤 확장 (공백 구분). /extensions 아래에 마운트한 확장 이름을 추가
+      - ENABLE_EXTS=aisl.robrain.extension
     volumes:
-      - ./fastdds_config/fastdds.xml:/fastdds.xml:ro
-      - ${XAUTHORITY}:/root/.Xauthority:rw
-      - ./workspace/cache/kit:/isaac-sim/kit/cache:rw
-      - ./workspace/cache/ov:/root/.cache/ov:rw
-      - ./workspace/cache/pip:/root/.cache/pip:rw
-      - ./workspace/cache/glcache:/root/.cache/nvidia/GLCache:rw
-      - ./workspace/cache/computecache:/root/.nv/ComputeCache:rw
-      - ./workspace/logs:/root/.nvidia-omniverse/logs:rw
-      - ./workspace/data:/root/.local/share/ov/data:rw
-      - ./workspace/documents:/root/Documents:rw
+      # 확장: /extensions/<확장 이름> 으로 마운트하면 Isaac Sim이 자동으로 찾음
+      - ./resources/extensions/aisl.robrain.extension:/extensions/aisl.robrain.extension
+      - ./resources/extensions/lang2pose:/isaac-sim/exts/omni.isaac.examples/omni/isaac/examples/lang2pose
+      - ./resources/assets:/root/Documents/assets
+      # GUI / 오디오
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - /dev/shm:/dev/shm
-      - ./resources/assets:/root/Documents/assets:rw
-      - ./resources/extensions/aisl.robrain.extension:/root/Documents/Kit/shared/exts/aisl.robrain.extension:rw
-      - ./resources/extensions/omni.isaac.sim.base.kit:/isaac-sim/apps/omni.isaac.sim.base.kit:rw
-      - ./resources/extensions/lang2pose:/isaac-sim/exts/omni.isaac.examples/omni/isaac/examples/lang2pose:rw
-      - ./resources/extensions/extension.toml:/isaac-sim/exts/omni.isaac.examples/config/extension.toml:rw
-    network_mode: "host"
-    ipc: host
-    entrypoint: >
-      /bin/bash -c "
-      ./isaac-sim.sh --allow-root
-      "
-    # entrypoint: ["/isaac-sim/python.sh", "/simulation_app/codes/run_simulation_app.py"]
-    privileged: true
-    tty: true
+      - ${XAUTHORITY}:/root/.Xauthority
+      - ${XDG_RUNTIME_DIR}/pulse/native:/run/user/1000/pulse/native
+      - $HOME/.config/pulse/cookie:/root/.config/pulse/cookie:ro
+      # 캐시 (셰이더 등, 재시작 속도용)
+      - ./workspace/cache/kit:/isaac-sim/kit/cache
+      - ./workspace/cache/ov:/root/.cache/ov
+      - ./workspace/cache/glcache:/root/.cache/nvidia/GLCache
+      - ./workspace/cache/computecache:/root/.nv/ComputeCache
+      - ./workspace/logs:/root/.nvidia-omniverse/logs
+      - ./workspace/data:/root/.local/share/ov/data
     deploy:
       resources:
         reservations:
           devices:
             - capabilities: [gpu]
-  llmagent:
-    container_name: llmagent
-    build:
-      context: .
-      dockerfile: docker/llm_agent.DockerFile
-    environment:
-      - DISPLAY=${DISPLAY}
-      - QT_X11_NO_MITSHM=1
-      # - OPENAI_API_KEY=${OPENAI_API_KEY}   # 쓰면 추가
+
+  # FoundationPose 6D 자세 추정: 카메라 토픽 -> /object_marker_array
+  perception:
+    container_name: lang2pose_perception
+    image: foundationpose:metacom
     network_mode: host
     ipc: host
-    devices:
-      - /dev/snd:/dev/snd
+    environment:
+      - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - FASTRTPS_DEFAULT_PROFILES_FILE=/etc/lang2pose/fastdds.xml
     volumes:
-      - ${XDG_RUNTIME_DIR}/pulse/native:/run/user/1000/pulse/native
-      - $HOME/.config/pulse/cookie:/root/.config/pulse/cookie:ro   # 인증 쿠키(권장)
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./resources/llmagent:/root/llmagent:rw
-    working_dir: /root/llmagent
+      - ./fastdds_config/fastdds.xml:/etc/lang2pose/fastdds.xml:ro
+      - ./resources/perception/lang2pose_perception:/ros2_ws/src/lang2pose_perception:ro
+      # FoundationPose 가중치와 YCB 메시 (FOUNDATIONPOSE_DATA로 경로 변경 가능)
+      - ${FOUNDATIONPOSE_DATA:-../metacom-foundationpose}/weights:/FoundationPose/weights:ro
+      - ${FOUNDATIONPOSE_DATA:-../metacom-foundationpose}/demo_data/ycb:/FoundationPose/demo_data/ycb:ro
     command: >
-      bash -lc '
-        source /opt/ros/humble/setup.bash;
-        if [ -d src ]; then
-          colcon build --symlink-install;
-          source install/setup.bash;
-        fi;
-        ros2 run aiagent simrobot --ros-args -p use_sim_time:=true
-      '
-    tty: true
-    stdin_open: true
+      bash -c "source /opt/ros/humble/setup.bash &&
+               cd /ros2_ws && colcon build --packages-select lang2pose_perception &&
+               source install/setup.bash &&
+               ros2 run lang2pose_perception pose_estimator"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]

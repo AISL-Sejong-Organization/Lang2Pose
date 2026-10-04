@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>lang2pose_perception</name>
+  <version>0.1.0</version>
+  <description>FoundationPose 6D pose estimation for Lang2Pose (publishes /object_marker_array)</description>
+  <maintainer email="hans324oh@gmail.com">Hyeonsu Oh</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>message_filters</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

@@ -23,9 +23,9 @@ from scipy.spatial.transform import Rotation as R
 
 # 환경변수 로드 및 API KEY 체크
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY is not set!")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+if not OPENROUTER_API_KEY:
+    raise ValueError("OPENROUTER_API_KEY is not set!")
 
 # Prompt 템플릿들
 agent_prompt = PromptTemplate(
@@ -155,7 +155,10 @@ class AIAgentNode(Node):
         )
 
         self.llm = ChatOpenAI(
-            model="gpt-4o-mini", temperature=0.2, openai_api_key=OPENAI_API_KEY
+            model="openai/gpt-4o-mini",
+            temperature=0.2,
+            openai_api_key=OPENROUTER_API_KEY,
+            openai_api_base="https://openrouter.ai/api/v1",
         )
 
         self.get_logger().info(f"{node_name} started.")
@@ -360,6 +363,9 @@ class AIAgentNode(Node):
         dots = [abs(np.dot(ax, base_z)) for ax in local_axes]
         max_index = np.argmax(dots)
         new_z = local_axes[max_index]
+        # 선택한 축이 아래를 향하면 뒤집어 항상 위쪽을 향하게
+        if np.dot(new_z, base_z) < 0:
+            new_z = -new_z
 
         # 2. 나머지 축 중 하나 선택하여, new_z 성분 제거 후 new_x 계산
         candidate = local_axes[1] if max_index == 0 else local_axes[0]
@@ -495,11 +501,15 @@ class AIAgentNode(Node):
             f"position=({obj_x:.2f}, {obj_y:.2f}, {obj_z:.2f})"
         )
 
-        # 객체 치수 (width, depth, height)
+        # 객체 치수 (width, depth, height): 마커 로컬 x, y, z 축 길이
         width = obj["width"]
         depth = obj["depth"]
-        height = obj["height"]
-        object_quat = [obj["qx"], obj["qy"], obj["qz"], obj["qw"]]
+        # orientation은 base_link 기준으로 변환된 값을 사용
+        q = transformed_pose.pose.orientation
+        object_quat = [q.x, q.y, q.z, q.w]
+        # 높이: base_link z축과 가장 가까운 물체 축의 길이
+        up_axis = int(np.argmax(np.abs(R.from_quat(object_quat).as_matrix()[2, :])))
+        height = [width, depth, obj["height"]][up_axis]
 
         # 재정의된 orientation 계산 (회전값은 그대로 유지)
         new_quat = self.reorient_object_rotation(object_quat, width, depth)
